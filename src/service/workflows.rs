@@ -34,7 +34,7 @@ impl GitHubService for Service {
         let mut set = JoinSet::new();
 
         repos.iter().for_each(|repo| {
-            set.spawn(get_last_run_for_repo(repo.clone()));
+            set.spawn(list_runs_for_repo(repo.clone()));
         });
 
         let mut workflows = vec![];
@@ -42,7 +42,7 @@ impl GitHubService for Service {
         while let Some(res) = set.join_next().await {
             let octo_res = res.or_raise(make_error)?;
 
-            let workflow = match octo_res {
+            let repo_workflows = match octo_res {
                 Ok(wf) => wf,
                 Err(e) => {
                     error!("Failed to get workflow runs for repo: {:?}", e);
@@ -50,9 +50,7 @@ impl GitHubService for Service {
                 }
             };
 
-            if let Some(w) = workflow {
-                workflows.push(w);
-            }
+            workflows.extend(repo_workflows);
         }
 
         workflows.sort_by(|a, b| Ord::cmp(&a.start_time, &b.start_time).reverse());
@@ -74,14 +72,15 @@ impl GitHubService for Service {
     }
 }
 
-async fn get_last_run_for_repo(repo: Repository) -> octocrab::Result<Option<WorkflowRun>> {
+async fn list_runs_for_repo(repo: Repository) -> octocrab::Result<Vec<WorkflowRun>> {
     let workflows = octocrab::instance()
         .workflows(repo.owner, repo.name)
         .list_all_runs()
-        .branch(repo.branch.unwrap_or("main".into()))
-        .per_page(1)
+        .branch(repo.branch.unwrap_or_else(|| "main".to_string()))
+        .per_page(repo.count.unwrap_or(1))
+        .actor(repo.actor.unwrap_or_default())
         .send()
         .await?;
 
-    Ok(workflows.items.first().map(Into::into))
+    Ok(workflows.items.iter().map(Into::into).collect())
 }

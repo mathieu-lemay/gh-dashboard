@@ -15,8 +15,13 @@ The repositories to watch are specified in the `repos` section of the configurat
 Example:
 ```toml
 repos = [
-    { owner = "mathieu-lemay", name = "gh-dashboard" },  # branch is "main" by default
-    { owner = "mathieu-lemay", name = "pipeline-runner", branch = "master" },
+    { owner = "octocat", name = "hello-world" },
+    # Optionally specify the branch. Default is "main".
+    { owner = "octocat", name = "hello-world", branch = "master" },
+    # Optionally specify the number of workflows to fetch. Default is 1.
+    { owner = "octocat", name = "hello-world", count = 5 },
+    # Optionally specify the actor. Default is <all>.
+    { owner = "octocat", name = "hello-world", actor = "octocat" },
 ]
 ```
 

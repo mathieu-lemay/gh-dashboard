@@ -9,6 +9,8 @@ pub struct Repository {
     pub owner: String,
     pub name: String,
     pub branch: Option<String>,
+    pub count: Option<u8>,
+    pub actor: Option<String>,
 }
 
 #[derive(Debug, Clone, Default)]
