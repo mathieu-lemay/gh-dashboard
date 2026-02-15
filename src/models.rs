@@ -1,6 +1,6 @@
 use std::fmt::Display;
 
-use octocrab::models::workflows::{Conclusion, Job, Run};
+use octocrab::models::workflows::{Conclusion, Job, Run, Status};
 use octocrab::models::{JobId, RunId};
 use serde::Deserialize;
 
@@ -46,6 +46,52 @@ impl From<&WorkflowRunConclusion> for String {
             WorkflowRunConclusion::Success => "✅ Success".to_string(),
             WorkflowRunConclusion::Failure => "❌ Failure".to_string(),
             WorkflowRunConclusion::Other(c) => {
+                format!("? {}", c)
+            }
+        }
+    }
+}
+
+#[derive(Debug, Clone, Default)]
+#[cfg_attr(any(test, feature = "mocks"), derive(fake::Dummy))]
+pub enum WorkflowJobStatus {
+    #[default]
+    Pending,
+    Queued,
+    InProgress,
+    Completed,
+    Failed,
+    Other(String),
+}
+
+impl Display for WorkflowJobStatus {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", String::from(self))
+    }
+}
+
+impl From<&Status> for WorkflowJobStatus {
+    fn from(c: &Status) -> Self {
+        match c {
+            Status::Pending => Self::Pending,
+            Status::Queued => Self::Queued,
+            Status::InProgress => Self::InProgress,
+            Status::Completed => Self::Completed,
+            Status::Failed => Self::Failed,
+            _ => Self::Other(format!("{:?}", c)),
+        }
+    }
+}
+
+impl From<&WorkflowJobStatus> for String {
+    fn from(v: &WorkflowJobStatus) -> Self {
+        match v {
+            WorkflowJobStatus::Pending => "⌛ Pending".to_string(),
+            WorkflowJobStatus::Queued => "⏱️ Queued".to_string(),
+            WorkflowJobStatus::InProgress => "󰦕 In Progress".to_string(),
+            WorkflowJobStatus::Completed => "✅ Completed".to_string(),
+            WorkflowJobStatus::Failed => "❌ Failed".to_string(),
+            WorkflowJobStatus::Other(c) => {
                 format!("? {}", c)
             }
         }
@@ -159,7 +205,7 @@ pub struct WorkflowJob {
     pub name: String,
     pub started_at: chrono::DateTime<chrono::Utc>,
     pub completed_at: Option<chrono::DateTime<chrono::Utc>>,
-    pub status: String,
+    pub status: WorkflowJobStatus,
     pub conclusion: WorkflowJobConclusion,
     pub html_url: url::Url,
 }
@@ -186,8 +232,7 @@ impl From<Job> for WorkflowJob {
             name: j.name.clone(),
             started_at: j.started_at,
             completed_at: j.completed_at,
-            // TODO
-            status: "".to_string(),
+            status: (&j.status).into(),
             conclusion,
             html_url: j.html_url.clone(),
         }

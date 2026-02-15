@@ -54,7 +54,7 @@ impl fake::Dummy<Faker> for WorkflowJob {
             name: Sentence(2..4).fake(),
             started_at: DateTime().fake(),
             completed_at: DateTime().fake(),
-            status: "success".to_string(),
+            status: Faker.fake(),
             conclusion: Faker.fake(),
             html_url: Url::parse(&url).unwrap(),
         }

@@ -161,8 +161,8 @@ impl From<&WorkflowJob> for Row<'_> {
                     .format("%Y-%m-%d %H:%M:%S")
                     .to_string()
             }),
-            j.status,
-            (&j.conclusion).into(),
+            j.status.to_string(),
+            j.conclusion.to_string(),
         ])
         .height(2)
     }
