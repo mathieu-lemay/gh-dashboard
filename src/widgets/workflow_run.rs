@@ -204,7 +204,8 @@ impl Widget for &WorkflowRunListWidget {
         // a table with the list of workflow runs
         let widths = [
             Constraint::Max(50),    // Project
-            Constraint::Max(120),   // Workflow Name
+            Constraint::Max(32),    // Workflow Name
+            Constraint::Max(128),   // Commit Title
             Constraint::Max(32),    // Start Time
             Constraint::Length(16), // Status
             Constraint::Length(16), // Completion
@@ -213,6 +214,7 @@ impl Widget for &WorkflowRunListWidget {
         let header = Row::new(vec![
             "Project",
             "Workflow Name",
+            "Commit Title",
             "Start Time",
             "Status",
             "Completion",
@@ -246,7 +248,8 @@ impl From<&WorkflowRun> for Row<'_> {
         let r = r.clone();
         Row::new(vec![
             format!("{}/{}", r.owner, r.repo),
-            format!("{}\n{}", r.name, r.commit_message),
+            r.name,
+            r.commit_message.split('\n').next().unwrap().to_string(),
             r.start_time
                 .with_timezone(&chrono::Local)
                 .format("%Y-%m-%d %H:%M:%S")
@@ -254,6 +257,5 @@ impl From<&WorkflowRun> for Row<'_> {
             r.status,
             (&r.conclusion).into(),
         ])
-        .height(2)
     }
 }
