@@ -6,6 +6,9 @@ edition = "2024"
 [lib]
 proc-macro = true
 
+[features]
+mocks = ["fake", "mockall", "rand"]
+
 [dependencies]
 async-trait = "0.1.89"
 chrono = "0.4.43"
@@ -26,3 +29,8 @@ syn = "2.0.114"
 tokio = { version = "1.38.0", features = ["rt-multi-thread", "macros"] }
 tokio-stream = "0.1.18"
 url = "2.5.8"
+
+# feature = mocks
+mockall = { version = "0.14.0", optional = true }
+fake = { version = "4.4.0", features = ["derive", "uuid", "chrono"], optional = true }
+rand = { version = "0.10.0", optional = true }

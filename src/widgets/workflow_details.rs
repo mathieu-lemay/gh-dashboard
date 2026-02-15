@@ -95,10 +95,6 @@ impl WorkflowDetailsWidget {
 
         state.workflow_jobs = jobs;
 
-        // if !state.workflow_jobs.is_empty() && state.table_state.selected().is_none()
-        // {     state.table_state.select(Some(0));
-        // }
-        //
         state.loading_state = LoadingState::Loaded(chrono::Local::now());
     }
 
@@ -156,9 +152,14 @@ impl From<&WorkflowJob> for Row<'_> {
         let j = r.clone();
         Row::new(vec![
             j.name,
-            j.started_at.format("%Y-%m-%d %H:%M:%S").to_string(),
+            j.started_at
+                .with_timezone(&chrono::Local)
+                .format("%Y-%m-%d %H:%M:%S")
+                .to_string(),
             j.completed_at.map_or("".to_string(), |t| {
-                t.format("%Y-%m-%d %H:%M:%S").to_string()
+                t.with_timezone(&chrono::Local)
+                    .format("%Y-%m-%d %H:%M:%S")
+                    .to_string()
             }),
             j.status,
             (&j.conclusion).into(),

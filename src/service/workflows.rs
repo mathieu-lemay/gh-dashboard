@@ -3,11 +3,14 @@ use std::fmt::{Debug, Formatter};
 use async_trait::async_trait;
 use exn::{Result, ResultExt};
 use log::error;
+#[cfg(any(test, feature = "mocks"))]
+use mockall::automock;
 use tokio::task::JoinSet;
 
 use crate::error::ServiceError;
 use crate::models::{Repository, WorkflowJob, WorkflowRun};
 
+#[cfg_attr(any(test, feature = "mocks"), automock)]
 #[async_trait]
 pub trait GitHubService: Debug + Send + Sync {
     async fn list_runs(&self, repos: &[Repository]) -> Result<Vec<WorkflowRun>, ServiceError>;

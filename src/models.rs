@@ -1,7 +1,7 @@
 use std::fmt::Display;
 
-use octocrab::models::RunId;
 use octocrab::models::workflows::{Conclusion, Job, Run};
+use octocrab::models::{JobId, RunId};
 use serde::Deserialize;
 
 #[derive(Debug, Clone, Deserialize)]
@@ -12,6 +12,7 @@ pub struct Repository {
 }
 
 #[derive(Debug, Clone, Default)]
+#[cfg_attr(any(test, feature = "mocks"), derive(fake::Dummy))]
 pub enum WorkflowRunConclusion {
     #[default]
     Pending,
@@ -50,6 +51,7 @@ impl From<&WorkflowRunConclusion> for String {
 }
 
 #[derive(Debug, Clone, Default)]
+#[cfg_attr(any(test, feature = "mocks"), derive(fake::Dummy))]
 pub enum WorkflowJobConclusion {
     ActionRequired,
     Cancelled,
@@ -151,10 +153,10 @@ impl From<&Run> for WorkflowRun {
 
 #[derive(Debug, Clone)]
 pub struct WorkflowJob {
-    pub id: String,
+    pub id: JobId,
     pub name: String,
-    pub started_at: chrono::DateTime<chrono::Local>,
-    pub completed_at: Option<chrono::DateTime<chrono::Local>>,
+    pub started_at: chrono::DateTime<chrono::Utc>,
+    pub completed_at: Option<chrono::DateTime<chrono::Utc>>,
     pub status: String,
     pub conclusion: WorkflowJobConclusion,
     pub html_url: url::Url,
@@ -178,12 +180,11 @@ impl From<Job> for WorkflowJob {
         );
 
         Self {
-            id: format!("{}", j.id),
+            id: j.id,
             name: j.name.clone(),
-            started_at: j.started_at.into(),
-            completed_at: j.completed_at.map(Into::into),
+            started_at: j.started_at,
+            completed_at: j.completed_at,
             // TODO
-            // status: j.status.clone(),
             status: "".to_string(),
             conclusion,
             html_url: j.html_url.clone(),

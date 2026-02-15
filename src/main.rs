@@ -1,3 +1,4 @@
+use std::panic;
 use std::sync::Arc;
 use std::time::Duration;
 
@@ -13,13 +14,16 @@ use tokio::sync::mpsc;
 use tokio_stream::StreamExt;
 
 use crate::error::AppError;
-use crate::service::workflows::Service;
+use crate::service::workflows;
+use crate::service::workflows::GitHubService;
 use crate::widgets::workflow_run::WorkflowRunListWidget;
 
 mod configuration;
 mod error;
 mod models;
 mod service;
+#[cfg(any(test, feature = "mocks"))]
+mod testing;
 mod widgets;
 
 fn make_error() -> AppError {
@@ -78,7 +82,7 @@ impl App {
     const FRAMES_PER_SECOND: f32 = 60.0;
 
     fn new(config: configuration::Settings) -> Self {
-        let github_service = Arc::new(Service {});
+        let github_service = get_github_service();
 
         Self {
             workflow_run_widgets: WorkflowRunListWidget::new(github_service, config.repos),
@@ -122,4 +126,38 @@ impl App {
             error!("Failed to send event to workflow run widget: {}", e);
         }
     }
+}
+
+#[cfg(feature = "mocks")]
+fn get_github_service() -> Arc<dyn GitHubService> {
+    let mut svc = workflows::MockGitHubService::new();
+
+    svc.expect_list_runs().returning(|_| {
+        use fake::Fake;
+        use fake::rand::random;
+
+        let n = random::<u8>() % 16;
+
+        let workflow_runs = (0..=n).map(|_| fake::Faker.fake()).collect();
+
+        Ok(workflow_runs)
+    });
+
+    svc.expect_list_jobs().returning(|_| {
+        use fake::Fake;
+        use fake::rand::random;
+
+        let n = random::<u8>() % 16;
+
+        let workflow_jobs = (0..=n).map(|_| fake::Faker.fake()).collect();
+
+        Ok(workflow_jobs)
+    });
+
+    Arc::new(svc)
+}
+
+#[cfg(not(feature = "mocks"))]
+fn get_github_service() -> Arc<dyn GitHubService> {
+    Arc::new(workflows::Service {})
 }
