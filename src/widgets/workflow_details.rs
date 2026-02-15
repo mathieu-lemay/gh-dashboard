@@ -11,7 +11,7 @@ use tokio::time;
 
 use crate::error::ServiceError;
 use crate::models::{WorkflowJob, WorkflowRun};
-use crate::service::workflows;
+use crate::service::workflows::{GitHubService, Service};
 use crate::widgets::state::LoadingState;
 
 #[derive(Debug, Default)]
@@ -21,15 +21,27 @@ struct WorkflowDetailsState {
     table_state: TableState,
 }
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone)]
 pub struct WorkflowDetailsWidget {
+    github_service: Arc<dyn GitHubService + Sync + Send>,
     state: Arc<RwLock<WorkflowDetailsState>>,
     visible: bool,
 }
 
-impl WorkflowDetailsWidget {
-    pub fn new() -> Self {
+impl Default for WorkflowDetailsWidget {
+    fn default() -> Self {
         Self {
+            github_service: Arc::new(Service {}),
+            state: Arc::new(RwLock::new(WorkflowDetailsState::default())),
+            visible: false,
+        }
+    }
+}
+
+impl WorkflowDetailsWidget {
+    pub fn new(github_service: Arc<dyn GitHubService + Sync + Send>) -> Self {
+        Self {
+            github_service,
             ..Default::default()
         }
     }
@@ -70,7 +82,7 @@ impl WorkflowDetailsWidget {
     async fn fetch_workflow_jobs(&self, workflow: &WorkflowRun) {
         self.set_loading_state(LoadingState::Loading);
 
-        let jobs = workflows::list_jobs(workflow).await;
+        let jobs = self.github_service.list_jobs(workflow).await;
 
         match jobs {
             Ok(j) => self.on_load(j),

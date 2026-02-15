@@ -17,8 +17,8 @@ pub struct AuthError(String);
 #[derive(Debug, Clone, Deserialize)]
 pub struct Settings {
     pub host: String,
-    auth_token: Option<SecretString>,
     pub repos: Vec<Repository>,
+    auth_token: Option<SecretString>,
 }
 
 impl Settings {

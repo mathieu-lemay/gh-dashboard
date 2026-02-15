@@ -23,7 +23,7 @@ use tokio::time;
 
 use crate::error::ServiceError;
 use crate::models::{Repository, WorkflowRun};
-use crate::service::workflows;
+use crate::service::workflows::{GitHubService, Service};
 use crate::widgets::state::LoadingState;
 use crate::widgets::workflow_details::WorkflowDetailsWidget;
 
@@ -34,8 +34,9 @@ use crate::widgets::workflow_details::WorkflowDetailsWidget;
 /// the state of the widget. Cloning the widget will clone the Arc, so you can
 /// pass it around to other threads, and this is used to spawn a background task
 /// to fetch the workflow runs.
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone)]
 pub struct WorkflowRunListWidget {
+    github_service: Arc<dyn GitHubService>,
     repos: Vec<Repository>,
     state: Arc<RwLock<WorkflowListState>>,
     details_widget: Arc<RwLock<WorkflowDetailsWidget>>,
@@ -48,10 +49,27 @@ struct WorkflowListState {
     table_state: TableState,
 }
 
-impl WorkflowRunListWidget {
-    pub fn new(repos: Vec<Repository>) -> Self {
+impl Default for WorkflowRunListWidget {
+    fn default() -> Self {
         Self {
+            github_service: Arc::new(Service {}),
+            repos: vec![],
+            state: Arc::new(RwLock::new(WorkflowListState::default())),
+            details_widget: Arc::new(RwLock::new(WorkflowDetailsWidget::default())),
+        }
+    }
+}
+
+impl WorkflowRunListWidget {
+    pub fn new(github_service: Arc<dyn GitHubService>, repos: Vec<Repository>) -> Self {
+        let details_widget = Arc::new(RwLock::new(WorkflowDetailsWidget::new(
+            github_service.clone(),
+        )));
+
+        Self {
+            github_service,
             repos,
+            details_widget,
             ..Default::default()
         }
     }
@@ -102,7 +120,7 @@ impl WorkflowRunListWidget {
     async fn fetch_workflow_runs(&self) {
         self.set_loading_state(LoadingState::Loading);
 
-        let workflows = workflows::list_runs(&self.repos).await;
+        let workflows = self.github_service.list_runs(&self.repos).await;
 
         match workflows {
             Ok(wfs) => self.on_load(wfs),
@@ -229,7 +247,10 @@ impl From<&WorkflowRun> for Row<'_> {
         Row::new(vec![
             format!("{}/{}", r.owner, r.repo),
             format!("{}\n{}", r.name, r.commit_message),
-            r.start_time.format("%Y-%m-%d %H:%M:%S").to_string(),
+            r.start_time
+                .with_timezone(&chrono::Local)
+                .format("%Y-%m-%d %H:%M:%S")
+                .to_string(),
             r.status,
             (&r.conclusion).into(),
         ])

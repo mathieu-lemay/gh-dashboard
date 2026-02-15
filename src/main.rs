@@ -1,3 +1,4 @@
+use std::sync::Arc;
 use std::time::Duration;
 
 use crossterm::event::{Event, EventStream, KeyCode};
@@ -12,6 +13,7 @@ use tokio::sync::mpsc;
 use tokio_stream::StreamExt;
 
 use crate::error::AppError;
+use crate::service::workflows::Service;
 use crate::widgets::workflow_run::WorkflowRunListWidget;
 
 mod configuration;
@@ -76,8 +78,10 @@ impl App {
     const FRAMES_PER_SECOND: f32 = 60.0;
 
     fn new(config: configuration::Settings) -> Self {
+        let github_service = Arc::new(Service {});
+
         Self {
-            workflow_run_widgets: WorkflowRunListWidget::new(config.repos),
+            workflow_run_widgets: WorkflowRunListWidget::new(github_service, config.repos),
             ..Default::default()
         }
     }
