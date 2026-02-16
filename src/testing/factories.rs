@@ -28,7 +28,7 @@ impl fake::Dummy<Faker> for WorkflowRun {
             name: Sentence(2..4).fake(),
             commit_message: format!("fake: {}", Bs().fake::<String>()),
             start_time: DateTime().fake(),
-            status: "success".to_string(),
+            status: Faker.fake(),
             conclusion: Faker.fake(),
             html_url: Url::parse(&url).unwrap(),
         }

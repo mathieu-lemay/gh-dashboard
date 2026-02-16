@@ -254,8 +254,8 @@ impl From<&WorkflowRun> for Row<'_> {
                 .with_timezone(&chrono::Local)
                 .format("%Y-%m-%d %H:%M:%S")
                 .to_string(),
-            r.status,
-            (&r.conclusion).into(),
+            r.status.to_string(),
+            r.conclusion.to_string(),
         ])
     }
 }

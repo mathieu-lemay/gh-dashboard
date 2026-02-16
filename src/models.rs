@@ -15,6 +15,41 @@ pub struct Repository {
 
 #[derive(Debug, Clone, Default)]
 #[cfg_attr(any(test, feature = "mocks"), derive(fake::Dummy))]
+pub enum WorkflowRunStatus {
+    #[default]
+    InProgress,
+    Completed,
+    Other(String),
+}
+
+impl Display for WorkflowRunStatus {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", String::from(self))
+    }
+}
+
+impl From<&str> for WorkflowRunStatus {
+    fn from(c: &str) -> Self {
+        match c {
+            "in_progress" => Self::InProgress,
+            "completed" => Self::Completed,
+            _ => Self::Other(c.to_string()),
+        }
+    }
+}
+
+impl From<&WorkflowRunStatus> for String {
+    fn from(v: &WorkflowRunStatus) -> Self {
+        match v {
+            WorkflowRunStatus::InProgress => "In Progress".to_string(),
+            WorkflowRunStatus::Completed => "Completed".to_string(),
+            WorkflowRunStatus::Other(c) => c.to_string(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Default)]
+#[cfg_attr(any(test, feature = "mocks"), derive(fake::Dummy))]
 pub enum WorkflowRunConclusion {
     #[default]
     Pending,
@@ -29,12 +64,12 @@ impl Display for WorkflowRunConclusion {
     }
 }
 
-impl From<&String> for WorkflowRunConclusion {
-    fn from(c: &String) -> Self {
-        match c.as_str() {
+impl From<&str> for WorkflowRunConclusion {
+    fn from(c: &str) -> Self {
+        match c {
             "success" => Self::Success,
             "failure" => Self::Failure,
-            _ => Self::Other(c.clone()),
+            _ => Self::Other(c.to_string()),
         }
     }
 }
@@ -45,9 +80,7 @@ impl From<&WorkflowRunConclusion> for String {
             WorkflowRunConclusion::Pending => "⌛ Pending".to_string(),
             WorkflowRunConclusion::Success => "✅ Success".to_string(),
             WorkflowRunConclusion::Failure => "❌ Failure".to_string(),
-            WorkflowRunConclusion::Other(c) => {
-                format!("? {}", c)
-            }
+            WorkflowRunConclusion::Other(c) => c.to_string(),
         }
     }
 }
@@ -86,14 +119,12 @@ impl From<&Status> for WorkflowJobStatus {
 impl From<&WorkflowJobStatus> for String {
     fn from(v: &WorkflowJobStatus) -> Self {
         match v {
-            WorkflowJobStatus::Pending => "⌛ Pending".to_string(),
-            WorkflowJobStatus::Queued => "⏱️ Queued".to_string(),
-            WorkflowJobStatus::InProgress => "󰦕 In Progress".to_string(),
-            WorkflowJobStatus::Completed => "✅ Completed".to_string(),
-            WorkflowJobStatus::Failed => "❌ Failed".to_string(),
-            WorkflowJobStatus::Other(c) => {
-                format!("? {}", c)
-            }
+            WorkflowJobStatus::Pending => "Pending".to_string(),
+            WorkflowJobStatus::Queued => "Queued".to_string(),
+            WorkflowJobStatus::InProgress => "In Progress".to_string(),
+            WorkflowJobStatus::Completed => "Completed".to_string(),
+            WorkflowJobStatus::Failed => "Failed".to_string(),
+            WorkflowJobStatus::Other(c) => c.to_string(),
         }
     }
 }
@@ -143,9 +174,7 @@ impl From<&WorkflowJobConclusion> for String {
             WorkflowJobConclusion::Skipped => "⏩ Skipped".to_string(),
             WorkflowJobConclusion::Success => "✅ Success".to_string(),
             WorkflowJobConclusion::TimedOut => "⏱️ Timed Out".to_string(),
-            WorkflowJobConclusion::Other(c) => {
-                format!("? {}", c)
-            }
+            WorkflowJobConclusion::Other(c) => c.to_string(),
         }
     }
 }
@@ -158,7 +187,7 @@ pub struct WorkflowRun {
     pub name: String,
     pub commit_message: String,
     pub start_time: chrono::DateTime<chrono::Utc>,
-    pub status: String,
+    pub status: WorkflowRunStatus,
     pub conclusion: WorkflowRunConclusion,
     pub html_url: url::Url,
 }
@@ -175,10 +204,12 @@ impl Display for WorkflowRun {
 
 impl From<&Run> for WorkflowRun {
     fn from(r: &Run) -> Self {
-        let conclusion = r.conclusion.as_ref().map_or(
-            WorkflowRunConclusion::default(),
-            WorkflowRunConclusion::from,
-        );
+        let conclusion = r
+            .conclusion
+            .as_ref()
+            .map_or(WorkflowRunConclusion::default(), |c| {
+                WorkflowRunConclusion::from(c.as_str())
+            });
 
         let owner = match &r.repository.owner {
             Some(owner) => owner.login.clone(),
@@ -192,7 +223,7 @@ impl From<&Run> for WorkflowRun {
             name: r.name.clone(),
             commit_message: r.head_commit.message.clone(),
             start_time: r.created_at,
-            status: r.status.clone(),
+            status: WorkflowRunStatus::from(r.status.as_str()),
             conclusion,
             html_url: r.html_url.clone(),
         }
