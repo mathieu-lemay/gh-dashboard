@@ -26,6 +26,11 @@ impl fake::Dummy<Faker> for WorkflowRun {
             owner,
             repo,
             name: Sentence(2..4).fake(),
+            branch: Sentence(2..4)
+                .fake::<String>()
+                .replace(' ', "-")
+                .replace('.', "")
+                .to_lowercase(),
             commit_message: format!("fake: {}", Bs().fake::<String>()),
             start_time: DateTime().fake(),
             status: Faker.fake(),

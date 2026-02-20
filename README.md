@@ -16,8 +16,8 @@ Example:
 ```toml
 repos = [
     { owner = "octocat", name = "hello-world" },
-    # Optionally specify the branch. Default is "main".
-    { owner = "octocat", name = "hello-world", branch = "master" },
+    # Optionally specify the branch. Default is all branches.
+    { owner = "octocat", name = "hello-world", branch = "main" },
     # Optionally specify the number of workflows to fetch. Default is 1.
     { owner = "octocat", name = "hello-world", count = 5 },
     # Optionally specify the actor. Default is <all>.

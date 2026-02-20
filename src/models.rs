@@ -187,6 +187,7 @@ pub struct WorkflowRun {
     pub id: RunId,
     pub owner: String,
     pub repo: String,
+    pub branch: String,
     pub name: String,
     pub commit_message: String,
     pub start_time: chrono::DateTime<chrono::Utc>,
@@ -199,8 +200,15 @@ impl Display for WorkflowRun {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
-            "WorkflowRun<id={}, repo={}/{} name={}, status={}, conclusion={}, url={}>",
-            self.id, self.owner, self.repo, self.name, self.status, self.conclusion, self.html_url
+            "WorkflowRun<id={}, repo={}/{} branch={}, name={}, status={}, conclusion={}, url={}>",
+            self.id,
+            self.owner,
+            self.repo,
+            self.branch,
+            self.name,
+            self.status,
+            self.conclusion,
+            self.html_url
         )
     }
 }
@@ -223,6 +231,7 @@ impl From<&Run> for WorkflowRun {
             id: r.id,
             owner,
             repo: r.repository.name.clone(),
+            branch: r.head_branch.clone(),
             name: r.name.clone(),
             commit_message: r.head_commit.message.clone(),
             start_time: r.created_at,

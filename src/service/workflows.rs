@@ -76,7 +76,7 @@ async fn list_runs_for_repo(repo: Repository) -> octocrab::Result<Vec<WorkflowRu
     let workflows = octocrab::instance()
         .workflows(repo.owner, repo.name)
         .list_all_runs()
-        .branch(repo.branch.unwrap_or_else(|| "main".to_string()))
+        .branch(repo.branch.unwrap_or_default())
         .per_page(repo.count.unwrap_or(1))
         .actor(repo.actor.unwrap_or_default())
         .send()
