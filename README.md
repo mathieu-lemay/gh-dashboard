@@ -26,8 +26,12 @@ repos = [
 ```
 
 ## Usage
+The data is refreshed automatically every minute.
+
+### Keys
 Select your workflow with <up>/<down> or <j>/<k>
 Press <enter> to open the workflow in your browser
+Press <r> to manually refresh
 Press <d> to see the details, and <esc> to close
 Press <q> to quit
 
