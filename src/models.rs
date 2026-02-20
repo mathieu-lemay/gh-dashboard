@@ -19,6 +19,7 @@ pub enum WorkflowRunStatus {
     #[default]
     InProgress,
     Completed,
+    Pending,
     Other(String),
 }
 
@@ -31,6 +32,7 @@ impl Display for WorkflowRunStatus {
 impl From<&str> for WorkflowRunStatus {
     fn from(c: &str) -> Self {
         match c {
+            "pending" => Self::Pending,
             "in_progress" => Self::InProgress,
             "completed" => Self::Completed,
             _ => Self::Other(c.to_string()),
@@ -41,6 +43,7 @@ impl From<&str> for WorkflowRunStatus {
 impl From<&WorkflowRunStatus> for String {
     fn from(v: &WorkflowRunStatus) -> Self {
         match v {
+            WorkflowRunStatus::Pending => "Pending".to_string(),
             WorkflowRunStatus::InProgress => "In Progress".to_string(),
             WorkflowRunStatus::Completed => "Completed".to_string(),
             WorkflowRunStatus::Other(c) => c.to_string(),
